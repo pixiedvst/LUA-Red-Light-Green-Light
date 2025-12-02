@@ -1,0 +1,89 @@
+local light = script.Parent
+
+local red = light:FindFirstChild("red")
+local yellow = light:FindFirstChild("yellow")
+local green = light:FindFirstChild("green")
+
+local Players = game:GetService("Players")
+local winners = {}
+local movementConnections = {}
+
+
+local function turnOffAll()
+	red.Color = Color3.fromRGB(17,17,17)
+	yellow.Color = Color3.fromRGB(17,17,17)
+	green.Color = Color3.fromRGB(17,17,17)
+end
+
+-- Win part
+
+local winPart = light:FindFirstChild("end")
+
+
+winPart.Touched:Connect(function(hit)
+	local character = hit.Parent
+	if not character then return end
+	
+	local humanoid = character:FindFirstChild("Humanoid")
+	local player = Players:GetPlayerFromCharacter(character)
+	if humanoid and player and not winners[player] then
+		winners[player] = true
+		
+		if movementConnections[player] then
+			movementConnections[player]:Disconnect()
+			movementConnections[player] = nil
+		end
+		
+		humanoid.Health = 100
+		
+	end
+	
+end)
+
+-- movement
+
+local redLight = false 
+
+game.Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function(char)
+		local humanoid = char:WaitForChild("Humanoid")
+		
+		humanoid:GetPropertyChangedSignal("MoveDirection"):Connect(function()
+			
+			if winners[player] then return end
+			
+			if redLight and humanoid.MoveDirection.Magnitude > 0.3 then
+				humanoid.Health = 0
+			end
+		end)
+	end)
+end)
+
+
+-- traffic light cycle
+
+while true do
+	
+	turnOffAll()
+	red.Material = Enum.Material.Neon
+	red.Color = Color3.fromRGB(255, 0, 0)
+	
+	redLight = true
+	task.wait(math.random(2, 5))
+	
+	redLight = false
+	red.Material = Enum.Material.Plastic
+	
+	turnOffAll()
+	green.Material = Enum.Material.Neon
+	green.Color = Color3.fromRGB(0, 255, 0)
+	task.wait(math.random(1, 5))	
+	green.Material = Enum.Material.Plastic
+	
+	turnOffAll()
+	yellow.Material = Enum.Material.Neon
+	yellow.Color = Color3.fromRGB(255, 255, 0)
+	task.wait(math.random(1, 5))
+	yellow.Material = Enum.Material.Plastic
+	
+end
